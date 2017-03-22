@@ -24,7 +24,7 @@ H = matrix(data = 0, ncol = mc, nrow = Time)
 
 # Matrix Column names
 hhColNames<-c("wealth","wage","employment","propensity.income","propensity.wealth","tax.rate","consumption","expected.income","adaptive.expectation")
-fColNames<-c("productivity","price","employee","production","wealth")
+fColNames<-c("productivity","price","employee","production","wealth","av.wage")
 gColNames<-c("debt","govSpending")
 
 # Creating Matrices
@@ -37,15 +37,15 @@ government<-as.data.frame(matrix(NA,nrow=1,ncol=length(gColNames),dimnames=list(
 # Expectation on income: backward looking + random element, min=0
 
 buildExpectation<-function(households=stop("Need to have households defined!")){
-	# Expected income = expected income(-1)+adapative*(expected income(-1)-wage*employment)
-	households$expected.income=households$expected.income+households$adaptive.expectation*(households$expected.income-households$employment*households$wage)
+	# Expected income = expected income(-1)-adapative*(expected income(-1)-wage*employment)
+	households$expected.income=households$expected.income-households$adaptive.expectation*(households$expected.income-households$employment*households$wage)
 	return(households)
 }
 
 # Pricing decision = unit costs = wage/productivity
 
 pricingDecision<-function(firms=stop("Need to have firms defined!")){
-	firms$price<-...
+	firms$price<-firms$av.wage/firms$productivity
 	return(firms)
 }
 
@@ -96,14 +96,19 @@ laborMarket<-function(firms=stop("Need to have firms defined!"),households=stop(
 	randomFirms<-sample(nrow(firms),nrow(firms))
 	for(i in 1:nrow(firms)){
 		indexF<-randomFirms[i]
+		wagebill<-0
 		if(firms$production[indexF]>0){
 			for(j in 1:firms$production[indexF]){
 				indexLabour<-sample(nrow(households),1)
+				wagebill<-wagebill+households$wage[indexLabour]
 				households$wealth[indexLabour]<-households$wealth[indexLabour]+households$wage[indexLabour]
 				firms$wealth[indexF]<-firms$wealth[indexF]-households$wage[indexLabour]
 				firms$employee[indexF]<-firms$employee[indexF]+1
 				households$employment[indexLabour]<-households$employment[indexLabour]+1
 			}
+		}
+		if(wagebill!=0){
+			firms$av.wage[indexF]<-wagebill/firms$employee[indexF]
 		}
 	}
 	return(list("firms"=firms,"households"=households))
@@ -111,15 +116,16 @@ laborMarket<-function(firms=stop("Need to have firms defined!"),households=stop(
 
 # Production
 
-production<-function(firms=stop("Need to have firms defined!"),households=stop("Need to have households defined!"),government=stop("Need to have government defined!")){
-	...
-	return(list("firms"=firms,"households"=households,"government"=government))
-}
+# production<-function(firms=stop("Need to have firms defined!"),households=stop("Need to have households defined!"),government=stop("Need to have government defined!")){
+# 	...
+# 	return(list("firms"=firms,"households"=households,"government"=government))
+# }
 
 # Taxes
 
 taxation<-function(households=stop("Need to have households defined!"),government=stop("Need to have government defined!")){
-	...
+	government$debt<-government$debt-sum(households$wage*households$employment*households$tax.rate)
+	households$wealth<-households$wealth-households$wage*households$employment*households$tax.rate
 	return(list("households"=households,"government"=government))
 }
 

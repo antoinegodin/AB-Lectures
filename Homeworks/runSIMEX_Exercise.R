@@ -1,22 +1,37 @@
 source("Homeworks/SIMEX_exercise.R")
 
-m=1
-t=500
+results<-list()
+nbScen=11
+for(i in 1:nbScen){
+	results[[i]]<-runModel(mc=10,exp.adapt = (i-1)/(nbScen-1))
+	
+}
 
-results<-runModel(Time=t,nHH=20,nF=5)
+#Sensistivity Analysis
 
-plot(1:t,results$C[m,1:t] + results$G[m,1:t],type="l",ylim=range(results$G+results$C),col=1,ylab="Output",xlab="")
+nameTS<-names(results[[1]])
+for(i in 1:length(results[[1]])){
+	sensitivityResults<-data.frame(matrix(0,nrow=100,ncol=0))
+	for(j in 1:length(results)){
+		tsMC<-as.data.frame(t(results[[j]][[i]]))
+		sensitivityResults[paste(nameTS[i],"scen",j,"average",sep=".")]<-rowSums(tsMC)/ncol(tsMC)
+		sensitivityResults[paste(nameTS[i],"scen",j,"min",sep=".")]<-apply(tsMC,1,function(x) min(x))
+		sensitivityResults[paste(nameTS[i],"scen",j,"max",sep=".")]<-apply(tsMC,1,function(x) max(x))
+	}
+	jpeg(filename=paste(nameTS[i],".jpg",sep=""))
+	matplot(sensitivityResults,col=rep(1:nbScen,each=3),lwd=rep(c(2,1,1),nbScen),lty=rep(c(1,2,2),nbScen),type='l',main=nameTS[i],ylab="",xlab="")
+	grid()
+	legend("bottomright",legend=paste("exp.adapt=",((1:nbScen)-1)/(nbScen-1)),col=1:nbScen,lwd=2,lty=1)
+	dev.off()
+}
 
-# plot(1:Time,Tax[1:Time,1],type="l",ylim=range(TAXwage+TAXProf),col=1,ylab="Taxes",xlab="")
+results<-runModel(mc=1,exp.adapt = 0.9,plot=T)
 
-# plot(1:Time,YD[1:Time,1],type="l",ylim=range(YD),col=1,ylab="Disposable income",xlab="")
+#PLOTTING ALL THE RESULTS
+matplot(t(results$C)+ t(results$G),type="l",ylim=range(results$G+results$C),col=1:10,lty=1,lwd=2,ylab="Output",xlab="")
 
-plot(1:t,results$C[m,1:t],type="l",ylim=range(results$C),col=1,ylab="Consumption",xlab="")
+matplot(t(results$C),type="l",ylim=range(results$C),col=1:10,ylab="Consumption",xlab="",lty=1,lwd=2)
 
-# plot(1:Time,G[1:Time,1] - Tax[1:Time,1],type="l",ylim=range(G-Tax),col=1,ylab="Public Deficit",xlab="")
+matplot(t(results$H),type="l",ylim=range(results$H),col=1:10,lwd=2,lty=1,ylab="Wealth",xlab="")
 
-# plot(1:Time,YD[1:Time,1] - C[1:Time,1],type="l",ylim=range(YD-C),col=1,ylab="Households Savings",xlab="")
-
-plot(1:t,results$H[m,1:t],type="l",ylim=range(results$H),col=1,ylab="Wealth",xlab="")
-
-plot(1:t,results$UR[m,1:t],type="l",ylim=range(results$UR),col=1,ylab="Unemployment rate",xlab="")
+matplot(t(results$UR),type="l",ylim=range(results$UR),col=1:10,lwd=2,lty=1,ylab="Unemployment rate",xlab="")

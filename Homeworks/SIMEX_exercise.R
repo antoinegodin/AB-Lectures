@@ -1,4 +1,4 @@
-runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F){
+runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F,prop.income=0.6,prop.wealth=0.4,tax.rate=0.2,govt.exp=20,exp.adapt=0.5,wage=1,timeShock=50,shockValue=1){
 	
 	# nHH=100
 	# nF=10
@@ -19,6 +19,7 @@ runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F){
 	Tax = matrix(data = 0, nrow = mc, ncol = Time)
 	YD = matrix(data = 0, nrow = mc, ncol = Time)
 	H = matrix(data = 0, nrow = mc, ncol = Time)
+	YDe = matrix(data = 0, nrow = mc, ncol = Time)
 	
 	# Matrix Column names
 	hhColNames<-c("wealth","wage","employment","propensity.income","propensity.wealth","tax.rate","consumption","expected.income","adaptive.expectation")
@@ -28,6 +29,8 @@ runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F){
 	#THIS IS THE MONTE CARLO REPETITION
 	for(m in 1:mc){
 		
+		
+		set.seed(m)
 		#MONTE CARLO SIMULATION INITIALISATION
 		
 		# Creating Matrices
@@ -40,33 +43,42 @@ runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F){
 		households$employment<-0
 		households$expected.income<-0
 		households$consumption<-0
-		households$wage<-1
-		households$propensity.income<-0.6
-		households$propensity.wealth<-0.4
-		households$tax.rate<-0.2
-		households$adaptive.expectation<-0.5
+		households$wage<-wage
+		households$propensity.income<-prop.income
+		households$propensity.wealth<-prop.wealth
+		households$tax.rate<-tax.rate
+		households$adaptive.expectation<-exp.adapt
 		
 		firms$employee<-0
 		firms$production<-0
 		firms$wealth<-0
-		firms$av.wage<-1
+		firms$av.wage<-wage
 		firms$price<-1
 		firms$productivity<-1
 		
 		government$debt<-0
-		government$govSpending<-20
+		government$govSpending<-govt.exp
 		
 		#THIS IS THE PERIOD REPETITION WITHIN 1 MONTE CARLO SIMULATION
 		for(t in 1:Time){
 			
-			#PERIOD INITIALISATION
-			firms$production<-0
-			households$employment<-0
-			firms$employee<-0
-			
-			#PERIOD SIMULATION
+			#EPECTATIONS BASED ON LAGGED VALUES THAT CANNOT BE RE-INITIALISED
 			households<-buildExpectation(households)
 			firms<-pricingDecision(firms)
+			
+			
+			#PERIOD INITIALISATION
+			firms$production<-0
+			firms$employee<-0
+			households$employment<-0
+			
+			#EXAMPLE OF SHOCK
+			if(t>timeShock){
+				households$propensity.income<-households$propensity.income*shockValue
+			}
+				
+			
+			#PERIOD SIMULATION
 			returnFromConsumption<-consumption(households=households,firms=firms)
 			households<-returnFromConsumption$households
 			firms<-returnFromConsumption$firms
@@ -91,6 +103,7 @@ runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F){
 			UR[m,t] = nrow(households[which(households$employment==0),])/nHH
 			Q[m,t] = sum(firms$production)
 			H[m,t] = sum(households$wealth)
+			YDe[m,t] = sum(households$expected.income)
 			
 			if(plot){
 				#Ploting results
@@ -120,7 +133,7 @@ runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F){
 		
 	}
 
-	return(list("G"=G,"C"=C,"WB"=WB,"Y"=Y,"N"=N,"UR"=UR,"Q"=Q,"Tax"=Tax,"YD"=YD,"H"=H))
+	return(list("G"=G,"C"=C,"WB"=WB,"Y"=Y,"N"=N,"UR"=UR,"Q"=Q,"Tax"=Tax,"YD"=YD,"H"=H,"YDe"=YDe))
 }
 
 
@@ -146,7 +159,7 @@ pricingDecision<-function(firms=stop("Need to have firms defined!")){
 
 consumption<-function(firms=stop("Need to have firms defined!"),households=stop("Need to have households defined!")){
 	#1. Compute consumption
-	households$consumption<-floor(min(households$expected.income*households$propensity.income+households$wealth*households$propensity.wealth,households$wealth))
+	households$consumption<-floor(pmin(households$expected.income*households$propensity.income+households$wealth*households$propensity.wealth,households$wealth))
 	#2. Distribute the consumption to firms
 	#a. Random sample of households
 	randomHouseholds<-sample(nrow(households),nrow(households))

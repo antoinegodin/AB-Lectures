@@ -1,9 +1,18 @@
 runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F,prop.income=0.6,prop.wealth=0.4,tax.rate=0.2,govt.exp=20,exp.adapt=0.5,wage=1,timeShock=50,shockValue=1){
 	
-	# nHH=100
-	# nF=10
-	# Time = 100
-	# mc=1
+	nHH=100
+	nF=10
+	Time = 100
+	mc=1
+	plot=F
+	prop.income=0.6
+	prop.wealth=0.4
+	tax.rate=0.2
+	govt.exp=20
+	exp.adapt=0.5
+	wage=1
+	timeShock=50
+	shockValue=1
 	
 	#INITIALISATION
 	
@@ -144,7 +153,7 @@ runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F,prop.income=0.6,prop.wea
 
 buildExpectation<-function(households=stop("Need to have households defined!")){
 	# Expected income = expected income(-1)-adapative*(expected income(-1)-wage*employment)
-	households$expected.income<-households$expected.income-households$adaptive.expectation*(households$expected.income-households$employment*households$wage)
+	households$expected.income<-households$expected.income-households$adaptive.expectation*(households$expected.income-households$employment*households$wage*(1-households$tax.rate))
 	return(households)
 }
 

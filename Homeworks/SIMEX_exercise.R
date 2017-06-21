@@ -1,18 +1,18 @@
 runModel<-function(nHH=100,nF=10,Time = 100,mc=1,plot=F,prop.income=0.6,prop.wealth=0.4,tax.rate=0.2,govt.exp=20,exp.adapt=0.5,wage=1,timeShock=50,shockValue=1){
-	
-	nHH=100
-	nF=10
-	Time = 100
-	mc=1
-	plot=F
-	prop.income=0.6
-	prop.wealth=0.4
-	tax.rate=0.2
-	govt.exp=20
-	exp.adapt=0.5
-	wage=1
-	timeShock=50
-	shockValue=1
+	# 
+	# nHH=100
+	# nF=10
+	# Time = 100
+	# mc=1
+	# plot=F
+	# prop.income=0.6
+	# prop.wealth=0.4
+	# tax.rate=0.2
+	# govt.exp=20
+	# exp.adapt=0.5
+	# wage=1
+	# timeShock=50
+	# shockValue=1
 	
 	#INITIALISATION
 	
